@@ -1,0 +1,21 @@
+name: GitLeaks
+
+on:
+  workflow_call:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    container:
+      image: zricethezav/gitleaks
+      volumes:
+        - ${{ github.workspace }}:/path
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect
+        run: gitleaks detect --source="/path"

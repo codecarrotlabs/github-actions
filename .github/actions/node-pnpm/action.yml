@@ -1,0 +1,45 @@
+name: Setup node & pnpm
+
+inputs:
+  node_version:
+    description: "Node.js version"
+    type: number
+    required: true
+  pnpm_version:
+    description: "Pnpm version"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+
+    - uses: pnpm/action-setup@v4
+      name: Install pnpm
+      id: pnpm-install
+      with:
+        version: ${{ inputs.pnpm_version }}
+
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+    - name: Cache .pnpm-store
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+        # Generate a new cache whenever packages or source files change.
+        key: |
+          linux-OS-node-v${{inputs.node_version }}-pnpm-v${{inputs.pnpm_version}}-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          linux-OS-node-v${{inputs.node_version }}-pnpm-v${{inputs.pnpm_version}}-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+    - name: Install packages
+      shell: bash
+      run: pnpm install --frozen-lockfile
